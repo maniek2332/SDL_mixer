@@ -79,6 +79,9 @@ target_include_directories(SDL_mixer-static PUBLIC
     ${SDL2_INCLUDE_DIR}
 )
 
+target_link_libraries(SDL_mixer-shared ${SDL2_LIBRARY})
+target_link_libraries(SDL_mixer-static ${SDL2_LIBRARY})
+
 message(STATUS "SDL2_FOUND: ${SDL2_FOUND}")
 message(STATUS "SDL2_LIBRARY: ${SDL2_LIBRARY}")
 message(STATUS "SDL2_INCLUDE_DIR: ${SDL2_INCLUDE_DIR}")
