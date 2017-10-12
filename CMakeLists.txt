@@ -87,10 +87,10 @@ message(STATUS "SDL2_LIBRARY: ${SDL2_LIBRARY}")
 message(STATUS "SDL2_INCLUDE_DIR: ${SDL2_INCLUDE_DIR}")
 
 install(TARGETS SDL_mixer-shared SDL_mixer-static
-        EXPORT SDL_mixerConfig
+        EXPORT SDL_mixer-config
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 install(FILES ${SRC_H_MASTER_FILE} DESTINATION include/SDL2)
 
-install(EXPORT SDL_mixerConfig DESTINATION share/SDL_mixer/cmake)
-export(TARGETS SDL_mixer-shared SDL_mixer-static FILE SDL_mixerConfig.cmake)
+install(EXPORT SDL_mixer-config DESTINATION lib/cmake/SDL_mixer)
+export(TARGETS SDL_mixer-shared SDL_mixer-static FILE SDL_mixer-config.cmake)
