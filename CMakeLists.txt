@@ -1,9 +1,25 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.12)
 
 project(SDL_mixer)
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-find_package(SDL2 REQUIRED)
+option(SDL_MIXER_SHARED
+    "Build shared library" ON
+)
+option(SDL_MIXER_ALLOW_FIND_SDL
+    "Allow searching for prebuilt SDL2 if target is not present" ON
+)
+
+if (NOT TARGET SDL2)
+    if (SDL_MIXER_ALLOW_FIND_SDL)
+        find_package(SDL2 REQUIRED)
+        add_library(SDL2 SHARED IMPORTED)
+        set_target_properties(SDL2 PROPERTIES IMPORTED_LOCATION ${SDL2_LIBRARY})
+        target_include_directories(SDL2 INTERFACE ${SDL2_INCLUDE_DIR})
+    else()
+        message(FATAL_ERROR "SDL2 target is not present")
+    endif()
+endif()
 
 set(SRC_C_FILES
     dynamic_flac.c
@@ -62,35 +78,31 @@ set(SRC_FILES ${SRC_C_FILES} ${SRC_H_FILES})
 # TODO more configuration options
 add_definitions(-DWAV_MUSIC)
 
-add_library(SDL_mixer-shared SHARED ${SRC_FILES})
-set_target_properties(SDL_mixer-shared PROPERTIES OUTPUT_NAME SDL2_mixer)
-add_library(SDL_mixer-static STATIC ${SRC_FILES})
-set_target_properties(SDL_mixer-static PROPERTIES OUTPUT_NAME SDL2_mixer)
+add_library(SDL_mixer OBJECT ${SRC_FILES})
+set_target_properties(SDL_mixer PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_include_directories(SDL_mixer-shared PUBLIC
+target_link_libraries(SDL_mixer PRIVATE SDL2)
+
+target_include_directories(SDL_mixer PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include/SDL2>
-    ${SDL2_INCLUDE_DIR}
 )
 
-target_include_directories(SDL_mixer-static PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include/SDL2>
-    ${SDL2_INCLUDE_DIR}
-)
+if (SDL_MIXER_SHARED)
+    add_library(SDL_mixer-shared SHARED $<TARGET_OBJECTS:SDL_mixer>)
+    list(APPEND SDL_MIXER_LIB_TARGETS SDL_mixer-shared)
+endif()
 
-target_link_libraries(SDL_mixer-shared ${SDL2_LIBRARY})
-target_link_libraries(SDL_mixer-static ${SDL2_LIBRARY})
+add_library(SDL_mixer-static STATIC $<TARGET_OBJECTS:SDL_mixer>)
+list(APPEND SDL_MIXER_LIB_TARGETS SDL_mixer-static)
 
-message(STATUS "SDL2_FOUND: ${SDL2_FOUND}")
-message(STATUS "SDL2_LIBRARY: ${SDL2_LIBRARY}")
-message(STATUS "SDL2_INCLUDE_DIR: ${SDL2_INCLUDE_DIR}")
+set_target_properties(${SDL_MIXER_LIB_TARGETS} PROPERTIES OUTPUT_NAME SDL2_mixer)
 
-install(TARGETS SDL_mixer-shared SDL_mixer-static
+install(TARGETS ${SDL_MIXER_LIB_TARGETS}
         EXPORT SDL_mixer-config
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 install(FILES ${SRC_H_MASTER_FILE} DESTINATION include/SDL2)
 
 install(EXPORT SDL_mixer-config DESTINATION lib/cmake/SDL_mixer)
-export(TARGETS SDL_mixer-shared SDL_mixer-static FILE SDL_mixer-config.cmake)
+export(TARGETS ${SDL_MIXER_LIB_TARGETS} FILE SDL_mixer-config.cmake)
