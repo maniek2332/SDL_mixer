@@ -9,6 +9,9 @@ option(SDL_MIXER_SHARED
 option(SDL_MIXER_ALLOW_FIND_SDL
     "Allow searching for prebuilt SDL2 if target is not present" ON
 )
+option(SDL_MIXER_FORMAT_OGG
+    "Support OGG format (builds libvorbis and libogg)" ON
+)
 
 if (NOT TARGET SDL2)
     if (SDL_MIXER_ALLOW_FIND_SDL)
@@ -21,6 +24,7 @@ if (NOT TARGET SDL2)
     endif()
 endif()
 
+# SDL mixer files
 set(SRC_C_FILES
     dynamic_flac.c
     dynamic_fluidsynth.c
@@ -73,20 +77,130 @@ set(SRC_H_FILES
     wavestream.h
 )
 
-set(SRC_FILES ${SRC_C_FILES} ${SRC_H_FILES})
+if (SDL_MIXER_FORMAT_OGG)
+# OGG dependency files
+    set(DEP_OGG_DIR "external/libogg-1.3.1")
 
-# TODO more configuration options
-add_definitions(-DWAV_MUSIC)
+    set(DEP_OGG_C_FILES
+        ${DEP_OGG_DIR}/src/bitwise.c
+        ${DEP_OGG_DIR}/src/framing.c
+        #${DEP_OGG_DIR}/src/crctable.h
+    )
+
+    set(SIZE16 int16_t)
+    set(USIZE16 uint16_t)
+    set(SIZE32 int32_t)
+    set(USIZE32 uint32_t)
+    set(SIZE64 int64_t)
+    set(USIZE64 uint64_t)
+
+    configure_file(${DEP_OGG_DIR}/include/ogg/config_types.h.in
+                   ${DEP_OGG_DIR}/include/ogg/config_types.h @ONLY)
+
+    set(DEP_OGG_H_FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/${DEP_OGG_DIR}/include/ogg/config_types.h
+        ${DEP_OGG_DIR}/include/ogg/ogg.h
+        ${DEP_OGG_DIR}/include/ogg/os_types.h
+    )
+
+    set(DEP_OGG_INCLUDES ${DEP_OGG_DIR}/include)
+
+
+# Vorbis + Vorbisfile dependency files
+    set(DEP_VORBIS_DIR "external/libvorbis-1.3.3")
+
+    set(DEP_VORBIS_H_FILES
+        ${DEP_VORBIS_DIR}/include/vorbis/codec.h
+        ${DEP_VORBIS_DIR}/include/vorbis/vorbisenc.h
+        ${DEP_VORBIS_DIR}/include/vorbis/vorbisfile.h
+
+        ${DEP_VORBIS_DIR}/lib/envelope.h
+        ${DEP_VORBIS_DIR}/lib/lpc.h
+        ${DEP_VORBIS_DIR}/lib/lsp.h
+        ${DEP_VORBIS_DIR}/lib/codebook.h
+        ${DEP_VORBIS_DIR}/lib/misc.h
+        ${DEP_VORBIS_DIR}/lib/psy.h
+        ${DEP_VORBIS_DIR}/lib/masking.h
+        ${DEP_VORBIS_DIR}/lib/os.h
+        ${DEP_VORBIS_DIR}/lib/mdct.h
+        ${DEP_VORBIS_DIR}/lib/smallft.h
+        ${DEP_VORBIS_DIR}/lib/highlevel.h
+        ${DEP_VORBIS_DIR}/lib/registry.h
+        ${DEP_VORBIS_DIR}/lib/scales.h
+        ${DEP_VORBIS_DIR}/lib/window.h
+        ${DEP_VORBIS_DIR}/lib/lookup.h
+        ${DEP_VORBIS_DIR}/lib/lookup_data.h
+        ${DEP_VORBIS_DIR}/lib/codec_internal.h
+        ${DEP_VORBIS_DIR}/lib/backends.h
+        ${DEP_VORBIS_DIR}/lib/bitrate.h
+    )
+
+    set(DEP_VORBIS_C_FILES
+        ${DEP_VORBIS_DIR}/lib/mdct.c
+        ${DEP_VORBIS_DIR}/lib/smallft.c
+        ${DEP_VORBIS_DIR}/lib/block.c
+        ${DEP_VORBIS_DIR}/lib/envelope.c
+        ${DEP_VORBIS_DIR}/lib/window.c
+        ${DEP_VORBIS_DIR}/lib/lsp.c
+        ${DEP_VORBIS_DIR}/lib/lpc.c
+        ${DEP_VORBIS_DIR}/lib/analysis.c
+        ${DEP_VORBIS_DIR}/lib/synthesis.c
+        ${DEP_VORBIS_DIR}/lib/psy.c
+        ${DEP_VORBIS_DIR}/lib/info.c
+        ${DEP_VORBIS_DIR}/lib/floor1.c
+        ${DEP_VORBIS_DIR}/lib/floor0.c
+        ${DEP_VORBIS_DIR}/lib/res0.c
+        ${DEP_VORBIS_DIR}/lib/mapping0.c
+        ${DEP_VORBIS_DIR}/lib/registry.c
+        ${DEP_VORBIS_DIR}/lib/codebook.c
+        ${DEP_VORBIS_DIR}/lib/sharedbook.c
+        ${DEP_VORBIS_DIR}/lib/lookup.c
+        ${DEP_VORBIS_DIR}/lib/bitrate.c
+
+        ${DEP_VORBIS_DIR}/lib/vorbisfile.c
+    )
+
+    set(DEP_VORBIS_INCLUDES ${DEP_VORBIS_DIR}/include ${DEP_VORBIS_DIR}/lib)
+endif()
+
+
+set(SRC_FILES
+    ${SRC_C_FILES}
+    ${SRC_H_FILES}
+)
+
+if (SDL_MIXER_FORMAT_OGG)
+    set(SRC_FILES
+        ${SRC_FILES}
+        ${DEP_OGG_C_FILES}
+        ${DEP_OGG_H_FILES}
+        ${DEP_VORBIS_C_FILES}
+        ${DEP_VORBIS_H_FILES}
+    )
+endif()
 
 add_library(SDL_mixer OBJECT ${SRC_FILES})
 set_target_properties(SDL_mixer PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(SDL_mixer PRIVATE SDL2)
 
+target_compile_definitions(SDL_mixer PRIVATE -DWAV_MUSIC)
+
+if (SDL_MIXER_FORMAT_OGG)
+    target_compile_definitions(SDL_mixer PRIVATE -DOGG_MUSIC)
+endif()
+
 target_include_directories(SDL_mixer PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include/SDL2>
 )
+
+if (SDL_MIXER_FORMAT_OGG)
+    target_include_directories(SDL_mixer PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${DEP_OGG_INCLUDES}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${DEP_VORBIS_INCLUDES}>
+    )
+endif()
 
 if (SDL_MIXER_SHARED)
     add_library(SDL_mixer-shared SHARED $<TARGET_OBJECTS:SDL_mixer>)
