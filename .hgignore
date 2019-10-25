@@ -1,3 +1,5 @@
+syntax:regexp
+^build
 syntax:glob
 autom4te*
 config.cache
@@ -11,8 +13,14 @@ libtool
 *.o
 *.la
 *.lai
+Debug
+Release
+*.user
+*.ncb
+*.suo
+*.sdf
 .DS_Store
 xcuserdata
 *.xcworkspace
-build
 SDL2_mixer.pc
+SDL2_mixer.spec
