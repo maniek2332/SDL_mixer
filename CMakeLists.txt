@@ -26,65 +26,56 @@ endif()
 
 # SDL mixer files
 set(SRC_C_FILES
-    dynamic_flac.c
-    dynamic_fluidsynth.c
-    dynamic_mod.c
-    dynamic_modplug.c
-    dynamic_mp3.c
-    dynamic_ogg.c
     effect_position.c
-    effect_stereoreverse.c
     effects_internal.c
-    fluidsynth.c
+    effect_stereoreverse.c
     load_aiff.c
-    load_flac.c
-    load_mp3.c
-    load_ogg.c
     load_voc.c
     mixer.c
     music.c
     music_cmd.c
     music_flac.c
+    music_fluidsynth.c
     music_mad.c
-    music_mod.c
+    music_mikmod.c
     music_modplug.c
+    music_mpg123.c
+    music_nativemidi.c
     music_ogg.c
-    wavestream.c
+    music_opus.c
+    music_timidity.c
+    music_wav.c
 )
 
 set(SRC_H_MASTER_FILE SDL_mixer.h)
 
 set(SRC_H_FILES
-    dynamic_flac.h
-    dynamic_fluidsynth.h
-    dynamic_mod.h
-    dynamic_modplug.h
-    dynamic_mp3.h
-    dynamic_ogg.h
     effects_internal.h
-    fluidsynth.h
     load_aiff.h
-    load_flac.h
-    load_mp3.h
-    load_ogg.h
     load_voc.h
+    mixer.h
     music_cmd.h
     music_flac.h
+    music_fluidsynth.h
+    music.h
     music_mad.h
-    music_mod.h
+    music_mikmod.h
     music_modplug.h
+    music_mpg123.h
+    music_nativemidi.h
     music_ogg.h
-    wavestream.h
+    music_opus.h
+    music_timidity.h
+    music_wav.h
 )
 
 if (SDL_MIXER_FORMAT_OGG)
 # OGG dependency files
-    set(DEP_OGG_DIR "external/libogg-1.3.1")
+    set(DEP_OGG_DIR "external/libogg-1.3.2")
 
     set(DEP_OGG_C_FILES
         ${DEP_OGG_DIR}/src/bitwise.c
         ${DEP_OGG_DIR}/src/framing.c
-        #${DEP_OGG_DIR}/src/crctable.h
     )
 
     set(SIZE16 int16_t)
@@ -107,7 +98,7 @@ if (SDL_MIXER_FORMAT_OGG)
 
 
 # Vorbis + Vorbisfile dependency files
-    set(DEP_VORBIS_DIR "external/libvorbis-1.3.3")
+    set(DEP_VORBIS_DIR "external/libvorbis-1.3.6")
 
     set(DEP_VORBIS_H_FILES
         ${DEP_VORBIS_DIR}/include/vorbis/codec.h
@@ -184,10 +175,10 @@ set_target_properties(SDL_mixer PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(SDL_mixer PRIVATE SDL2)
 
-target_compile_definitions(SDL_mixer PRIVATE -DWAV_MUSIC)
+target_compile_definitions(SDL_mixer PRIVATE -DMUSIC_WAV)
 
 if (SDL_MIXER_FORMAT_OGG)
-    target_compile_definitions(SDL_mixer PRIVATE -DOGG_MUSIC)
+    target_compile_definitions(SDL_mixer PRIVATE -DMUSIC_OGG)
 endif()
 
 target_include_directories(SDL_mixer PUBLIC
