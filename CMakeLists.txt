@@ -78,6 +78,10 @@ if (SDL_MIXER_FORMAT_OGG)
         ${DEP_OGG_DIR}/src/framing.c
     )
 
+    set(INCLUDE_INTTYPES_H 0)
+    set(INCLUDE_STDINT_H 1)
+    set(INCLUDE_SYS_TYPES_H 0)
+
     set(SIZE16 int16_t)
     set(USIZE16 uint16_t)
     set(SIZE32 int32_t)
